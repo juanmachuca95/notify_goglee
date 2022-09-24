@@ -2,16 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gen2brain/beeep"
 )
 
 var (
-	fileName        string = "chat.txt"
-	errNotFoundFile error  = errors.New("open chat.txt: no such file or directory")
+	fileName string = "chat.txt"
 )
 
 type MessageDTO struct {
@@ -37,6 +37,7 @@ func main() {
 func data(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -58,11 +59,22 @@ func data(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, _ = file.WriteString("User: " + m.SenderName + " - " + m.FormattedTimestamp + "\n")
+	var messages string
 	for _, value := range m.Messages {
 		_, err := file.WriteString(value + "\n")
 		if err != nil {
 			log.Fatal("Cannot create row text on file ", err)
 		}
+
+		messages += value + "\n"
 	}
+
+	err = beeep.Notify(m.SenderName, messages, "bootcamp.png")
+	if err != nil {
+		panic(err)
+	}
+
+	// That's also possible with the package de github.com/bitfield/script
+	// script.Exec("notify-send " + message).Stdout()
 	_, _ = file.WriteString("\n")
 }
