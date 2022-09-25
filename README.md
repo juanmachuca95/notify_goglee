@@ -1,80 +1,109 @@
-## Read chat google meet
+## Noticador de mensajes - google meet 
+Para este programa me apoye en utilidades ya programadas como ```github.com/gen2brain/beeep```. Pero tambien es posible hacer utilizando herramientas que provee cada sistema operativo, en linux por ejemplo: ````notify-send````
 
-1. Script JS 
-2. Run server on port 8000
-3. Create endpoint data/ [POST]
+ 
+1. Run server on port 8000 (golang). 
+```go 
+go run main.go  
+```
 
-https://github.com/martinlindhe/notify
-
-Probando el correcto funcionamiento con curl:
+2. Prueba el endpoint data/ [POST]
 
 ```curl
-curl -d '{"sender_name":"juan", "formatted_timestamp":"12:00", "messages":["hola yo tenia una consulta, no entiendo nada de lo se esta explicando en esta clase, podemos empezar de vuelta?", "quiero el reembolso"]}' http://localhost:8000/data
+curl -d '{"sender_name":"juan", "formatted_timestamp":"12:00", "messages":["Hello", "¿Puedes ves mis mensajes de google meet en otra ventana?"]}' http://localhost:8000/data
 ```
 
-```js
-// Script para obtener los mensajes del chat en google met
-var totalMessagesEnviados = 0;
-var url = 'http://localhost:8000/data';
-var iterator = setInterval(function(){
-    var actualTotalMessages = 0;
+3. Script JS for google meet.
 
-    // Todos los div con los mensajes por usuario
-    dataSenders = document.querySelectorAll('[data-sender-name]');
-    console.log("Hay ", dataSenders.length, " usuarios");
-    for (var i=0; i<dataSenders.length; i++) {
-        senderMessages = dataSenders[i].lastChild.querySelectorAll('[data-message-text]');
-        actualTotalMessages+= senderMessages.length; // Total de mensajes individuales (son los que se envia en cada enter) 
+### Javascript que se ejecuta en google meet
+Existen extensiones que permiten guardar el script en el navegador y ejecutarlo cada vez que ingrese a dicho sitio. Pero no lo recomiendo, dado que el proceso que suplanta es solamente copiar y pegar. 
+
+<b>Nota</b>: El timer esta puesto a 5s, sientase libre de modificarlo.
+
+```js
+
+// ejecución principal del programa.
+var totalMensajesActuales = [];
+var myInterval = setInterval(function(){
+    let nuevosMensajesActuales = getMessages()
+
+    diff = getDifference(totalMensajesActuales, nuevosMensajesActuales)
+    if (diff.length > 0){
+        sendToServer(diff)
+        totalMensajesActuales = nuevosMensajesActuales 
     }
 
-    console.log("Hay un total de " + actualTotalMessages +  " mensajes ")
-    console.log("************** enviados ", totalMessagesEnviados," actuales", actualTotalMessages, "******************")
-    if (totalMessagesEnviados < actualTotalMessages) {
-        console.log("Hay mensajes "+ (actualTotalMessages - totalMessagesEnviados) +" para enviar")
 
-        var msgArr = []; // array de mensajes
-        for (var i=0; i<dataSenders.length; i++) {
-            let messages = []
-            let messagesSenders = dataSenders[i].lastChild.querySelectorAll('[data-message-text]');
+}, 5000)
 
-            messagesSenders.forEach(function(ele) {messages.push(ele);})
-            var obj = {
-                'sender_name': dataSenders[i].getAttribute('data-sender-name'), // Nombre del usuario
-                'formatted_timestamp': dataSenders[i].getAttribute('data-formatted-timestamp'), // Hora ej: 00:00
-                'messages': messages, // Lista mensajes por usuario
-            }
-            console.log(obj)
-            msgArr.push(obj)
+// Obtiene los mensajes del panel de chat en google meet
+function getMessages(){
+    let nuevosMessages = []
+    document.querySelectorAll('[data-sender-name]').forEach((element) => {
+        let obj = {
+            'sender_name':element.getAttribute('data-sender-name'),
+            'formatted_timestamp': element.getAttribute('data-formatted-timestamp'),
+            'messages': []
         }
-
-
-        let count_messages = 0;
-        msgArr.forEach(function(obj){
-            obj.forEach(function(msg){
-                count_messages++;
-                if(count_messages >= actualTotalMessages){
-                    fetch(url, {
-                        mode: 'no-cors',
-                        headers: Headers({{ 'Content-Type', ' }})
-                    })
-                }
-            })
+        element.lastChild.querySelectorAll('[data-message-text]').forEach((msg) => {
+            obj.messages.push(msg.getAttribute('data-message-text'))    
         })
+        
+        nuevosMessages.push(obj)
+    })
 
+    return nuevosMessages
+}
 
-    }else{
-        console.log("No hay mensajes para enviar")
+// Obtiene los mensajes que no se han enviado aún
+function getDifference(actuales, nuevos){
+    var mensajesParaEnviar = [];
+    // Corroboramos que hayan mensajes iguales entre arrays
+    for(var i = 0; i < actuales.length; i++){
+        if(actuales[i].messages.length === nuevos[i].messages.length){
+            console.log("mensajes con la misma cantidad ", actuales[i].messages.length, nuevos[i].messages.length);
+        }else{
+            console.log("hay mensajes nuevos para enviar")
+            console.log("num: ", i, actuales[i].messages, nuevos[i].messages)
+            // Si actual tiene 10 y nuevo tiene 12
+            let nuevoObj = {
+                'sender_name': actuales[i].sender_name,
+                'formatted_timestamp': actuales[i].formatted_timestamp,
+                'messages': []
+            }
+
+            for (var j = actuales[i].messages.length; j < nuevos[i].messages.length; j++){
+                console.log("Se agregará el mensaje: ", nuevos[i].messages[j])
+                nuevoObj.messages.push(nuevos[i].messages[j]);
+            }
+
+            mensajesParaEnviar.push(nuevoObj);
+        }
     }
-}, 2000)
 
+    console.log("Para enviar tenemos ", mensajesParaEnviar);
+    // falta agregar los nuevos mensajes de usuarios
+    if (actuales.length < nuevos.length) {
+        for (var i = actuales.length; i < nuevos.length; i++){
+            console.log("Nuevos mensajes", nuevos[i])
+            mensajesParaEnviar.push(nuevos[i])
+        }
+    }
+
+    return mensajesParaEnviar
+}
+
+
+// Solo envia los mensajes que no se enviado previamente
+function sendToServer(mensajesParaEnviar){
+    mensajesParaEnviar.forEach((msg) => {
+        console.log("Enviando mensajes al servidor ", msg)
+        fetch("http://localhost:8000/data", {
+            headers: new Headers({ "content-type": "application/json" }),
+            mode: 'no-cors',
+            method: "POST",
+            body: JSON.stringify(msg)   
+        })
+    })
+}
 ```
-
-Para envio de información 
-```js
-clearInterval(iterator);
-```
-
-
-### Enlaces útlies 
-
-alinear ventanas https://parzibyte.me/blog/2021/08/17/alinear-ventana-tkinter-python/

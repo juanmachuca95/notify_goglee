@@ -22,8 +22,6 @@ type MessageDTO struct {
 
 // Format message from google meet script javascript
 // {"sender-name":"Tú","formatted-timestamp":"19:38","messages":["lkjljl"]}
-
-// funciona
 func main() {
 	http.HandleFunc("/data", data)
 
@@ -34,6 +32,7 @@ func main() {
 	}
 }
 
+// Captura de mensajes de google meet
 func data(w http.ResponseWriter, r *http.Request) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -49,7 +48,7 @@ func data(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check file exists or create
+	// Cada vez que recibimos información guardamos el resultado en chat.txt
 	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		file, err = os.Create(fileName)
@@ -58,6 +57,7 @@ func data(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ignoramos el error, ya que no deveriamos retornar info al script js
 	_, _ = file.WriteString("User: " + m.SenderName + " - " + m.FormattedTimestamp + "\n")
 	var messages string
 	for _, value := range m.Messages {
@@ -69,7 +69,7 @@ func data(w http.ResponseWriter, r *http.Request) {
 		messages += value + "\n"
 	}
 
-	err = beeep.Notify(m.SenderName, messages, "bootcamp.png")
+	err = beeep.Notify(m.SenderName, messages, "go.png")
 	if err != nil {
 		panic(err)
 	}
