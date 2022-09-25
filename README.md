@@ -14,7 +14,6 @@ curl -d '{"sender_name":"juan", "formatted_timestamp":"12:00", "messages":["hola
 
 ```js
 // Script para obtener los mensajes del chat en google met
-var dataOld = 0;
 var totalMessagesEnviados = 0;
 var url = 'http://localhost:8000/data';
 var iterator = setInterval(function(){
@@ -22,48 +21,51 @@ var iterator = setInterval(function(){
 
     // Todos los div con los mensajes por usuario
     dataSenders = document.querySelectorAll('[data-sender-name]');
+    console.log("Hay ", dataSenders.length, " usuarios");
     for (var i=0; i<dataSenders.length; i++) {
         senderMessages = dataSenders[i].lastChild.querySelectorAll('[data-message-text]');
-        actualTotalMessages+= senderMessages.length;    
+        actualTotalMessages+= senderMessages.length; // Total de mensajes individuales (son los que se envia en cada enter) 
     }
 
     console.log("Hay un total de " + actualTotalMessages +  " mensajes ")
-
-    console.log("*********************************************************")
     console.log("************** enviados ", totalMessagesEnviados," actuales", actualTotalMessages, "******************")
     if (totalMessagesEnviados < actualTotalMessages) {
         console.log("Hay mensajes "+ (actualTotalMessages - totalMessagesEnviados) +" para enviar")
 
-        let contador = 0
         var msgArr = []; // array de mensajes
         for (var i=0; i<dataSenders.length; i++) {
-            // Mensajes por sender
-            var obj = {
-                'sender_name': dataSenders[i].getAttribute('data-sender-name'),
-                'formatted_timestamp': dataSenders[i].getAttribute('data-formatted-timestamp'),
-                'messages': [],
-            }
-            
-            senderMessages = dataSenders[i].lastChild.querySelectorAll('[data-message-text]');
-            senderMessages.forEach(function(ele) {
-                contador++;
-                if (contador > totalMessagesEnviados){
-                    obj.messages.push(ele.innerHTML)  
-                }
-            });
+            let messages = []
+            let messagesSenders = dataSenders[i].lastChild.querySelectorAll('[data-message-text]');
 
-            msgArr.push(obj);
+            messagesSenders.forEach(function(ele) {messages.push(ele);})
+            var obj = {
+                'sender_name': dataSenders[i].getAttribute('data-sender-name'), // Nombre del usuario
+                'formatted_timestamp': dataSenders[i].getAttribute('data-formatted-timestamp'), // Hora ej: 00:00
+                'messages': messages, // Lista mensajes por usuario
+            }
+            console.log(obj)
+            msgArr.push(obj)
         }
 
-        console.log(msgArr);
 
-        msgArr.forEach(function(ele){
-            
+        let count_messages = 0;
+        msgArr.forEach(function(obj){
+            obj.forEach(function(msg){
+                count_messages++;
+                if(count_messages >= actualTotalMessages){
+                    fetch(url, {
+                        mode: 'no-cors',
+                        headers: Headers({{ 'Content-Type', ' }})
+                    })
+                }
+            })
         })
+
+
     }else{
         console.log("No hay mensajes para enviar")
     }
-}, 8000)
+}, 2000)
 
 ```
 
