@@ -18,7 +18,9 @@ curl -d '{"sender_name":"juan", "formatted_timestamp":"12:00", "messages":["Hell
 ### Javascript que se ejecuta en google meet
 Existen extensiones que permiten guardar el script en el navegador y ejecutarlo cada vez que ingrese a dicho sitio. Pero no lo recomiendo, dado que el proceso que suplanta es solamente copiar y pegar. 
 
-<b>Nota</b>: El timer esta puesto a 5s, sientase libre de modificarlo.
+<b>Nota:</b>
+* El timer esta puesto a 5s, sientase libre de modificarlo.
+* Goole meet puede cambiar el nombre etiquetas con el correr del tiempo, lo que hara que deba actualizarlo manualmente.
 
 ```js
 
