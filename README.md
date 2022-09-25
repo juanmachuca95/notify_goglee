@@ -63,10 +63,10 @@ function getDifference(actuales, nuevos){
     // Corroboramos que hayan mensajes iguales entre arrays
     for(var i = 0; i < actuales.length; i++){
         if(actuales[i].messages.length === nuevos[i].messages.length){
-            console.log("mensajes con la misma cantidad ", actuales[i].messages.length, nuevos[i].messages.length);
+            // console.log("mensajes con la misma cantidad ", actuales[i].messages.length, nuevos[i].messages.length);
         }else{
-            console.log("hay mensajes nuevos para enviar")
-            console.log("num: ", i, actuales[i].messages, nuevos[i].messages)
+            // console.log("hay mensajes nuevos para enviar")
+            // console.log("num: ", i, actuales[i].messages, nuevos[i].messages)
             // Si actual tiene 10 y nuevo tiene 12
             let nuevoObj = {
                 'sender_name': actuales[i].sender_name,
@@ -75,7 +75,7 @@ function getDifference(actuales, nuevos){
             }
 
             for (var j = actuales[i].messages.length; j < nuevos[i].messages.length; j++){
-                console.log("Se agregará el mensaje: ", nuevos[i].messages[j])
+                // console.log("Se agregará el mensaje: ", nuevos[i].messages[j])
                 nuevoObj.messages.push(nuevos[i].messages[j]);
             }
 
@@ -83,11 +83,11 @@ function getDifference(actuales, nuevos){
         }
     }
 
-    console.log("Para enviar tenemos ", mensajesParaEnviar);
+    // console.log("Para enviar tenemos ", mensajesParaEnviar);
     // falta agregar los nuevos mensajes de usuarios
     if (actuales.length < nuevos.length) {
         for (var i = actuales.length; i < nuevos.length; i++){
-            console.log("Nuevos mensajes", nuevos[i])
+            // console.log("Nuevos mensajes", nuevos[i])
             mensajesParaEnviar.push(nuevos[i])
         }
     }
@@ -99,7 +99,6 @@ function getDifference(actuales, nuevos){
 // Solo envia los mensajes que no se enviado previamente
 function sendToServer(mensajesParaEnviar){
     mensajesParaEnviar.forEach((msg) => {
-        console.log("Enviando mensajes al servidor ", msg)
         fetch("http://localhost:8000/data", {
             headers: new Headers({ "content-type": "application/json" }),
             mode: 'no-cors',
